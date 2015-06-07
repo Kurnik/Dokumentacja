@@ -1,0 +1,112 @@
+DROP TABLE ranking CASCADE CONSTRAINTS;
+DROP TABLE uzytkownik CASCADE CONSTRAINTS;
+DROP TABLE rodzaj_gry CASCADE CONSTRAINTS;
+DROP TABLE GRA CASCADE CONSTRAINTS;
+DROP TABLE w_grze CASCADE CONSTRAINTS;
+DROP TABLE zapro CASCADE CONSTRAINTS;
+DROP TABLE statki CASCADE CONSTRAINTS;
+DROP TABLE warcaby CASCADE CONSTRAINTS;
+DROP TRIGGER custom;
+DROP TRIGGER custom2;
+DROP TRIGGER custom3;
+DROP SEQUENCE id_seq;
+
+CREATE TABLE ranking (
+    id_uzytkownik integer NOT NULL,
+    ranking_warcaby integer  Default 1000,
+    ranking_statki integer  Default 1000
+) ;
+
+CREATE TABLE uzytkownik (
+    id_uzytkownik integer NOT NULL,
+    nick char(255)  unique NOT NULL,
+    haslo char(25)  NOT NULL,
+    CONSTRAINT uzytkownik_pk PRIMARY KEY (id_uzytkownik)
+) ;
+
+CREATE TABLE rodzaj_gry (
+    id_rodzaj integer  NOT NULL,
+    rodzaj char(255)  NOT NULL,
+    CONSTRAINT rodzaj_gry_pk PRIMARY KEY (id_rodzaj)
+) ;
+
+CREATE TABLE GRA (
+    id_gry integer  NOT NULL,
+    uzytkownik_id_Wygrany integer  NOT NULL,
+    uzytkownik_id_przegrany integer  NOT NULL,
+    data date  NOT NULL,
+    id_rodzaj integer  NOT NULL,
+    CONSTRAINT GRA_pk PRIMARY KEY (id_gry)
+) ;
+
+CREATE TABLE W_GRZE (
+    id_rodzaj integer NOT NULL,
+    nick_1 char(255)  unique NOT NULL,
+    nick_2 char(255)  unique NOT NULL,
+    ruch char(5) 
+);
+
+Create Table ZAPRO (
+    nick_1 char(255) not null,
+    nick_2 char(255) not null,
+    odp int default 0
+);
+
+Create Table Statki (
+    nick char(255) not null,
+    strzal char(5) not null,
+    trafiony integer default 0
+);
+
+Create Table warcaby (
+    nick char(255) not null,
+    ruch char(10),
+    zbity char(5)    
+);
+
+ALTER TABLE GRA ADD CONSTRAINT GRA_rodzaj_gry 
+    FOREIGN KEY (id_rodzaj)
+    REFERENCES rodzaj_gry (id_rodzaj)
+    ;
+
+ALTER TABLE w_grze ADD CONSTRAINT w_grze_rodzaj_gry 
+    FOREIGN KEY (id_rodzaj)
+    REFERENCES rodzaj_gry (id_rodzaj)
+    ;
+
+ALTER TABLE GRA ADD CONSTRAINT GRA_uzytkownik 
+    FOREIGN KEY (uzytkownik_id_Wygrany)
+    REFERENCES uzytkownik (id_uzytkownik)
+    ;
+
+
+ALTER TABLE ranking ADD CONSTRAINT uzytkownik_ranking 
+    FOREIGN KEY (id_uzytkownik)
+    REFERENCES uzytkownik (id_uzytkownik)
+    ;
+INSERT INTO uzytkownik(id_uzytkownik,nick,haslo) VALUES('0','admin','admin');
+INSERT INTO rodzaj_gry(id_rodzaj,rodzaj) VALUES('1','statki');
+INSERT INTO rodzaj_gry(id_rodzaj,rodzaj) VALUES('2','warcaby');
+create sequence id_seq
+minvalue 1
+maxvalue 999
+start with 1
+increment by 1;
+
+create or replace trigger custom
+before insert
+on uzytkownik
+for each row
+begin
+:new.id_uzytkownik:=id_seq.nextval;
+end;
+/
+create or replace trigger custom2
+after insert
+on uzytkownik
+for each row
+declare
+begin
+insert into ranking(id_uzytkownik) VALUES(id_seq.currval);
+end;
+/
